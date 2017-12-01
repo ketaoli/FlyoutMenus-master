@@ -1,0 +1,85 @@
+apply plugin: 'com.android.library'
+apply plugin: 'com.jfrog.bintray'
+
+group = 'org.zakariya.flyoutmenus'
+version = '0.5.3'
+
+android {
+	compileSdkVersion 26
+	buildToolsVersion "26.0.2"
+
+	defaultConfig {
+		minSdkVersion 14
+		targetSdkVersion 26
+		versionCode 1
+		versionName version
+	}
+	buildTypes {
+		release {
+			minifyEnabled false
+			proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+		}
+	}
+}
+
+dependencies {
+	compile fileTree(dir: 'libs', include: ['*.jar'])
+	androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+		exclude group: 'com.android.support', module: 'support-annotations'
+	})
+	compile 'com.android.support:appcompat-v7:26.+'
+	testCompile 'junit:junit:4.12'
+}
+
+task generateSourcesJar(type: Jar) {
+	from android.sourceSets.main.java.srcDirs
+	classifier = 'sources'
+}
+
+task generateJavadocs(type: Javadoc) {
+	source = android.sourceSets.main.java.srcDirs
+	classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+	failOnError false // I don't want javadoc errors to prevent the build from completing
+}
+
+task generateJavadocsJar(type: Jar, dependsOn: generateJavadocs) {
+	from generateJavadocs.destinationDir
+	classifier 'javadoc'
+}
+
+artifacts {
+	archives generateJavadocsJar
+	archives generateSourcesJar
+}
+
+def libraryDescription = 'Simple Material-style FlyoutMenu for Android'
+
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+
+bintray {
+	user = properties.getProperty("bintray.user")
+	key = properties.getProperty("bintray.apikey")
+	configurations = ['archives']
+	pkg {
+		repo = 'maven'
+		name = 'flyoutmenus'
+
+		desc = libraryDescription
+		websiteUrl = 'https://github.com/ShamylZakariya/FlyoutMenus'
+		vcsUrl = 'https://github.com/ShamylZakariya/FlyoutMenus.git'
+		licenses = ["MIT"]
+		publish = true
+		publicDownloadNumbers = true
+
+		version {
+			desc = libraryDescription
+			released  = new Date()
+			gpg {
+				sign = true //Determines whether to GPG sign the files. The default is false
+				passphrase = properties.getProperty("bintray.gpg.password")
+				//Optional. The passphrase for GPG signing'
+			}
+		}
+	}
+}
